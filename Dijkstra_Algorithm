@@ -1,0 +1,115 @@
+#include <iostream>
+#include <vector>
+#include <unordered_map>
+#include <queue>
+#include <climits>
+
+using namespace std;
+
+// Data structure to represent a weighted edge
+struct Edge {
+    int to;
+    int weight;
+};
+
+// A comparator for the priority queue (min-heap)
+struct Compare {
+    bool operator()(pair<int, int> a, pair<int, int> b) {
+        return a.second > b.second;
+    }
+};
+
+// Dijkstra's Algorithm
+void dijkstra(int start, int end, unordered_map<int, vector<Edge>>& graph) {
+    // Store the shortest known distances
+    unordered_map<int, int> distances;
+    unordered_map<int, int> previous;
+
+    // Initialize distances to "infinity" (INT_MAX) and set up previous nodes
+    for (auto& node : graph) {
+        distances[node.first] = INT_MAX;
+        previous[node.first] = -1;
+    }
+
+    // The distance from the start to itself is 0
+    distances[start] = 0;
+
+    // Min-heap (priority queue) to choose the next vertex with the smallest distance
+    priority_queue<pair<int, int>, vector<pair<int, int>>, Compare> pq;
+    pq.push({start, 0});
+
+    while (!pq.empty()) {
+        int current = pq.top().first;
+        int currentDist = pq.top().second;
+        pq.pop();
+
+        // If we reach the destination node, stop
+        if (current == end) break;
+
+        // Explore neighbors
+        for (Edge& edge : graph[current]) {
+            int neighbor = edge.to;
+            int weight = edge.weight;
+
+            // Calculate new potential distance
+            int newDist = currentDist + weight;
+
+            if (newDist < distances[neighbor]) {
+                distances[neighbor] = newDist;
+                previous[neighbor] = current;
+                pq.push({neighbor, newDist});
+            }
+        }
+    }
+
+    // Output the results
+    if (distances[end] == INT_MAX) {
+        cout << "No path from " << start << " to " << end << "." << endl;
+    } else {
+        cout << "Shortest path cost from " << start << " to " << end << ": " << distances[end] << endl;
+
+        // Reconstruct and print the path
+        vector<int> path;
+        for (int at = end; at != -1; at = previous[at]) {
+            path.push_back(at);
+        }
+        reverse(path.begin(), path.end());
+
+        cout << "Path: ";
+        for (int node : path) {
+            cout << node << " ";
+        }
+        cout << endl;
+    }
+}
+
+// Helper function to add edges to the graph
+void addEdge(unordered_map<int, vector<Edge>>& graph, int from, int to, int weight) {
+    graph[from].push_back({to, weight});
+    graph[to].push_back({from, weight});  // Assuming an undirected graph
+}
+
+int main() {
+    unordered_map<int, vector<Edge>> graph;
+
+    // Define the graph (hardcoded for this example)
+    addEdge(graph, 1, 2, 10);
+    addEdge(graph, 1, 5, 3);
+    addEdge(graph, 2, 3, 1);
+    addEdge(graph, 5, 2, 4);
+    addEdge(graph, 5, 3, 8);
+    addEdge(graph, 5, 4, 2);
+    addEdge(graph, 4, 3, 7);
+    addEdge(graph, 3, 6, 5);
+    addEdge(graph, 4, 6, 6);
+
+    int start, end;
+    cout << "Enter starting node: ";
+    cin >> start;
+    cout << "Enter ending node: ";
+    cin >> end;
+
+    dijkstra(start, end, graph);
+
+    return 0;
+}
